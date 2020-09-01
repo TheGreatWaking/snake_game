@@ -1,0 +1,3 @@
+/home/erik/文档/snake_game/build/CMakeFiles/rebuild_cache.dir
+/home/erik/文档/snake_game/build/CMakeFiles/edit_cache.dir
+/home/erik/文档/snake_game/build/CMakeFiles/SnakeGame.dir
