@@ -1,6 +1,10 @@
 #include "renderer.h"
 #include <iostream>
 #include <string>
+#include <memory>
+#include <future>
+#include <thread>
+#include <chrono>
 
 Renderer::Renderer(const std::size_t screen_width,
                    const std::size_t screen_height,
@@ -16,6 +20,9 @@ Renderer::Renderer(const std::size_t screen_width,
   }
 
   // Create Window
+  /* std::unique_ptr<SDL_Window> sdlWindow = std::make_unique<SDL_Window>(SDL_CreateWindow("Snake Game", SDL_WINDOWPOS_CENTERED,
+                                SDL_WINDOWPOS_CENTERED, screen_width,
+                                screen_height, SDL_WINDOW_SHOWN)); */
   sdl_window = SDL_CreateWindow("Snake Game", SDL_WINDOWPOS_CENTERED,
                                 SDL_WINDOWPOS_CENTERED, screen_width,
                                 screen_height, SDL_WINDOW_SHOWN);
@@ -39,15 +46,22 @@ Renderer::~Renderer() {
 }
 
 void Renderer::Render(Snake const snake, SDL_Point const &food) {
-  SDL_Rect block;
+  /* SDL_Rect block;
   block.w = screen_width / grid_width;
-  block.h = screen_height / grid_height;
+  block.h = screen_height / grid_height; */
 
   // Clear screen
   SDL_SetRenderDrawColor(sdl_renderer, 0x1E, 0x1E, 0x1E, 0xFF);
   SDL_RenderClear(sdl_renderer);
+  {
+    std::future<void> ftr1 = std::async(std::launch::async, &Renderer::RenderFood, this, food);
+    std::future<void> ftr2 = std::async(std::launch::async, &Renderer::RenderSnake, this, snake);
 
-  // Render food
+    ftr1.wait();
+    ftr2.wait();
+  }
+
+  /* // Render food
   SDL_SetRenderDrawColor(sdl_renderer, 0xFF, 0xCC, 0x00, 0xFF);
   block.x = food.x * block.w;
   block.y = food.y * block.h;
@@ -69,10 +83,47 @@ void Renderer::Render(Snake const snake, SDL_Point const &food) {
   } else {
     SDL_SetRenderDrawColor(sdl_renderer, 0xFF, 0x00, 0x00, 0xFF);
   }
-  SDL_RenderFillRect(sdl_renderer, &block);
+  SDL_RenderFillRect(sdl_renderer, &block); */
 
   // Update Screen
   SDL_RenderPresent(sdl_renderer);
+}
+
+void Renderer::RenderFood(SDL_Point const &food){
+  //_cond.wait_until();
+  SDL_Rect block;
+  block.w = screen_width / grid_width;
+  block.h = screen_height / grid_height;
+
+  SDL_SetRenderDrawColor(sdl_renderer, 0xFF, 0xCC, 0x00, 0xFF);
+  block.x = food.x * block.w;
+  block.y = food.y * block.h;
+  SDL_RenderFillRect(sdl_renderer, &block);
+  std::this_thread::sleep_for(std::chrono::milliseconds(1));
+}
+
+void Renderer::RenderSnake(Snake const snake){
+  SDL_Rect block;
+  block.w = screen_width / grid_width;
+  block.h = screen_height / grid_height;
+
+  // Render snake's body
+  SDL_SetRenderDrawColor(sdl_renderer, 0xFF, 0xFF, 0xFF, 0xFF);
+  for (SDL_Point const &point : snake.body) {
+    block.x = point.x * block.w;
+    block.y = point.y * block.h;
+    SDL_RenderFillRect(sdl_renderer, &block);
+  }
+  // Render snake's head
+  block.x = static_cast<int>(snake.head_x) * block.w;
+  block.y = static_cast<int>(snake.head_y) * block.h;
+  if (snake.alive) {
+    SDL_SetRenderDrawColor(sdl_renderer, 0x00, 0x7A, 0xCC, 0xFF);
+  } else {
+    SDL_SetRenderDrawColor(sdl_renderer, 0xFF, 0x00, 0x00, 0xFF);
+  }
+  SDL_RenderFillRect(sdl_renderer, &block);
+  std::this_thread::sleep_for(std::chrono::milliseconds(1));
 }
 
 void Renderer::UpdateWindowTitle(int score, int fps) {

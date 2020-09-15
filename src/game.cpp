@@ -76,11 +76,18 @@ void Game::Update() {
   // Check if there's food over here
   if (food.x == new_x && food.y == new_y) {
     score++;
+    //std::thread t1(PlaceFood);
     PlaceFood();
     // Grow snake and increase speed.
+    //std::thread t2(snake.GrowBody);
     snake.GrowBody();
-    snake.speed += 0.02;
+    snake.speed += speedUp;
   }
+}
+
+void Game::setSpeedUp(double speed)
+{
+  speedUp = speed;
 }
 
 int Game::GetScore() const { return score; }
